@@ -99,6 +99,40 @@ def hierarchal_cluster(vectors, num_clusters):
         curr_clusters -= 1
     return clusters
 
+def check_image(image, clusters):
+    """
+    Checks the image to see if it is a 3 or a 7
+
+    Parameters
+    ----------
+    image : torch.Tensor
+        Image to check
+
+    Returns
+    -------
+    is_3 : bool
+        True if the image is a 3, False if the image is a 7
+
+    """
+    # Flatten image
+    image = image.reshape(-1, 28*28).numpy()
+
+    # Perform PCA
+    pca = PCA(n_components=2)
+    image_pca = pca.fit_transform(image).astype(np.float32)
+
+    # Check which cluster the image belongs to
+    #  - if the image is closer to the cluster with 3s, it is a 3
+    # - if the image is closer to the cluster with 7s, it is a 7
+    # - if the image is equally close to both clusters, it is a 3
+
+    # Compute distances to cluster centers
+    centers = np.array([cluster.center for cluster in clusters])
+    diffs = centers[None, :] - image_pca[0, None, :]
+    dists = np.linalg.norm(diffs, axis=-1)
+
+    # Return True if the image is closer to the cluster with 3s
+    return dists[0, 0] < dists[0, 1]
 
 if __name__ == '__main__':
 
@@ -142,4 +176,16 @@ if __name__ == '__main__':
     plt.legend()
     plt.show()
 
-
+    plt.imshow(dataset.data[13].reshape(28, 28), cmap='gray')
+    plt.imshow(dataset.data[11].reshape(28, 28), cmap='gray')
+    if check_image(dataset.data[10:12], clusters):
+        print('The image is a 3')
+    else:
+        print('The image is a 7')
+    
+    plt.imshow(dataset.data[15].reshape(28, 28), cmap='gray')
+    plt.imshow(dataset.data[16].reshape(28, 28), cmap='gray')
+    if check_image(dataset.data[15:17], clusters):
+        print('The image is a 3')
+    else:
+        print('The image is a 7')
